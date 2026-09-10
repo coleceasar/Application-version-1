@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .font-app-sans {
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  .font-app-jakarta {
+    font-family: "Plus Jakarta Sans", sans-serif;
+  }
+  .font-app-mono {
+    font-family: "JetBrains Mono", monospace;
+  }
+  .font-app-serif {
+    font-family: "Playfair Display", Georgia, serif;
+  }
+  .font-app-rounded {
+    font-family: "Comfortaa", cursive, sans-serif;
+  }
+  .font-app-cyber {
+    font-family: "Orbitron", sans-serif;
+  }
+
+  .light-mode-app {
+    filter: invert(0.92) hue-rotate(180deg);
+  }
+
+  .light-mode-app img,
+  .light-mode-app video,
+  .light-mode-app iframe {
+    filter: invert(1.08) hue-rotate(180deg);
+  }
+}

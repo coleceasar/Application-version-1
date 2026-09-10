@@ -1,0 +1,6 @@
+{
+  "name": "F& E",
+  "description": "Secure Android messaging app with AES-256-GCM end-to-end encryption, self-destructing messages, WebRTC voice and video calling, Gemini AI Assistant inquiries and chat, biometric and passkey authentication, offline queuing, and network switching.",
+  "requestFramePermissions": ["camera", "microphone", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#042f2e" />
+      <stop offset="50%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#14b8a6" />
+      <stop offset="100%" stop-color="#0d9488" />
+    </linearGradient>
+    <linearGradient id="neonGlow" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2dd4bf" />
+      <stop offset="100%" stop-color="#0f766e" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded squircle -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  <rect width="510" height="510" x="1" y="1" rx="111" fill="none" stroke="#14b8a6" stroke-width="4" stroke-opacity="0.4" />
+
+  <!-- Radar / E2EE concentric signal circles -->
+  <circle cx="256" cy="256" r="190" fill="none" stroke="#14b8a6" stroke-width="2" stroke-opacity="0.15" stroke-dasharray="8 8" />
+  <circle cx="256" cy="256" r="145" fill="none" stroke="#14b8a6" stroke-width="2" stroke-opacity="0.25" />
+
+  <!-- Shield Shape -->
+  <path d="M 256,90 L 370,140 C 370,250 256,360 256,395 C 256,360 142,250 142,140 Z" fill="url(#shieldGrad)" />
+
+  <!-- Inner Dark Shield Layer -->
+  <path d="M 256,112 L 350,154 C 350,244 256,338 256,368 C 256,338 162,244 162,154 Z" fill="#090d16" />
+
+  <!-- Padlock Shackle -->
+  <path d="M 222,230 L 222,205 C 222,186 237,170 256,170 C 275,170 290,186 290,205 L 290,230" fill="none" stroke="#2dd4bf" stroke-width="16" stroke-linecap="round" />
+
+  <!-- Padlock Body -->
+  <rect x="206" y="226" width="100" height="82" rx="18" fill="url(#neonGlow)" />
+
+  <!-- Keyhole -->
+  <circle cx="256" cy="258" r="9" fill="#042f2e" />
+  <path d="M 253,258 L 259,258 L 261,284 L 251,284 Z" fill="#042f2e" />
+
+  <!-- Android Cyber Nodes -->
+  <circle cx="196" cy="336" r="8" fill="#2dd4bf" />
+  <line x1="196" y1="336" x2="226" y2="354" stroke="#2dd4bf" stroke-width="3" stroke-opacity="0.7" />
+  <circle cx="226" cy="354" r="5" fill="#14b8a6" />
+
+  <circle cx="316" cy="336" r="8" fill="#2dd4bf" />
+  <line x1="316" y1="336" x2="286" y2="354" stroke="#2dd4bf" stroke-width="3" stroke-opacity="0.7" />
+  <circle cx="286" cy="354" r="5" fill="#14b8a6" />
+</svg>
