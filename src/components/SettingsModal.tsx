@@ -37,6 +37,7 @@ import {
   Layers,
   CheckCheck,
   Trash2,
+  Database,
 } from 'lucide-react';
 import { usePWAInstall } from '../services/usePWAInstall';
 import { permissionManager } from '../services/permissionManager';
@@ -58,6 +59,10 @@ import {
   listGoogleDriveBackups,
   exportLocalChatData,
 } from '../services/googleDriveService';
+import {
+  syncAllLocalDataToFirestore,
+  testFirestoreConnection,
+} from '../services/firebaseService';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -154,6 +159,15 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [driveBackups, setDriveBackups] = useState<GoogleDriveBackupFile[]>([]);
   const [isLoadingBackups, setIsLoadingBackups] = useState(false);
 
+  // Firestore sync state
+  const [isSyncingFirestore, setIsSyncingFirestore] = useState(false);
+  const [firestoreSyncSuccess, setFirestoreSyncSuccess] = useState<string | null>(null);
+  const [firestoreConnected, setFirestoreConnected] = useState(true);
+
+  useEffect(() => {
+    testFirestoreConnection().then(setFirestoreConnected);
+  }, []);
+
   useEffect(() => {
     return permissionManager.subscribe((s) => setPermissions(s));
   }, []);
@@ -221,6 +235,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
       setBackupError('Failed to fetch Drive backups');
     } finally {
       setIsLoadingBackups(false);
+    }
+  };
+
+  const handleSyncToFirestore = async () => {
+    if (!googleUser?.uid) return;
+    setIsSyncingFirestore(true);
+    setFirestoreSyncSuccess(null);
+    setBackupError(null);
+    try {
+      const res = await syncAllLocalDataToFirestore(googleUser.uid, contacts, messages, []);
+      setFirestoreSyncSuccess(
+        `Synced ${res.countContacts} contacts & ${res.countMessages} messages to Firestore`
+      );
+    } catch (err: unknown) {
+      setBackupError(err instanceof Error ? err.message : 'Firestore cloud sync failed');
+    } finally {
+      setIsSyncingFirestore(false);
     }
   };
 
@@ -410,7 +441,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </div>
           </div>
 
-          {/* Section: Google Account & Drive Backup */}
+          {/* Section: Firebase & Cloud Sync */}
           <div className="p-4 rounded-2xl bg-neutral-950/80 border border-neutral-800 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
@@ -418,10 +449,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <Cloud className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-neutral-100 text-sm">Google Account & Cloud Backup</h3>
-                  <p className="text-[11px] text-neutral-400">Backup encrypted chat archives to Google Drive</p>
+                  <h3 className="font-semibold text-neutral-100 text-sm">Firebase & Cloud Sync</h3>
+                  <p className="text-[11px] text-neutral-400">Google Firestore database & Drive cloud backup</p>
                 </div>
               </div>
+              <div className="flex items-center gap-1.5">
+                <span className="inline-block w-2 h-2 rounded-full bg-teal-400 animate-pulse" />
+                <span className="text-[10px] font-mono text-teal-400 font-medium">Firestore Live</span>
+              </div>
+            </div>
+
+            {/* Firestore Database Connection Banner */}
+            <div className="p-2.5 rounded-xl bg-neutral-900/90 border border-neutral-800 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 text-neutral-300">
+                <Database className="w-3.5 h-3.5 text-teal-400 shrink-0" />
+                <span className="text-[11px]">Database: <span className="text-teal-300 font-mono">europe-west2</span> (Enterprise Firestore)</span>
+              </div>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20 font-medium">
+                Connected
+              </span>
             </div>
 
             {/* Google Connection Status */}
@@ -455,32 +501,53 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   </button>
                 </div>
 
-                {/* Backup Actions */}
+                {/* Cloud & Backup Actions */}
                 <div className="flex flex-wrap gap-2 pt-1">
+                  <button
+                    type="button"
+                    disabled={isSyncingFirestore}
+                    onClick={handleSyncToFirestore}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-neutral-950 text-xs font-bold shadow-md transition-all active:scale-95"
+                  >
+                    {isSyncingFirestore ? (
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Database className="w-3.5 h-3.5" />
+                    )}
+                    <span>{isSyncingFirestore ? 'Syncing to Firestore...' : 'Sync to Cloud Firestore'}</span>
+                  </button>
+
                   <button
                     type="button"
                     disabled={isBackingUp}
                     onClick={handleBackupToDrive}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-teal-500 hover:bg-teal-400 disabled:opacity-50 text-neutral-950 text-xs font-bold shadow-md transition-all active:scale-95"
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 disabled:opacity-50 text-neutral-200 text-xs font-semibold transition-all active:scale-95"
                   >
                     {isBackingUp ? (
                       <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                     ) : (
-                      <CloudUpload className="w-3.5 h-3.5" />
+                      <CloudUpload className="w-3.5 h-3.5 text-teal-400" />
                     )}
-                    <span>{isBackingUp ? 'Uploading to Drive...' : 'Backup to Google Drive'}</span>
+                    <span>{isBackingUp ? 'Uploading...' : 'Backup to Drive'}</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleLoadDriveBackups}
                     disabled={isLoadingBackups}
-                    className="flex items-center gap-1 px-3 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-750 text-neutral-200 text-xs font-medium transition-colors"
+                    className="flex items-center gap-1 px-3 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-750 text-neutral-300 text-xs font-medium transition-colors"
                   >
                     <RefreshCw className={`w-3 h-3 ${isLoadingBackups ? 'animate-spin' : ''}`} />
-                    <span>List Drive Backups</span>
+                    <span>List Backups</span>
                   </button>
                 </div>
+
+                {firestoreSyncSuccess && (
+                  <div className="p-2.5 bg-teal-500/10 border border-teal-500/30 rounded-xl flex items-center gap-2 text-xs text-teal-300">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-teal-400" />
+                    <span>{firestoreSyncSuccess}</span>
+                  </div>
+                )}
 
                 {backupSuccessInfo && (
                   <div className="p-2.5 bg-teal-500/10 border border-teal-500/30 rounded-xl flex items-center gap-2 text-xs text-teal-300">

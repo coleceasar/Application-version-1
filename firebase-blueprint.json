@@ -1,0 +1,260 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User account profile and cryptographic identity metadata",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Firebase user identification ID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Display name of the user",
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "description": "User email address",
+          "maxLength": 256
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Avatar photo URL",
+          "maxLength": 1024
+        },
+        "publicKey": {
+          "type": "string",
+          "description": "Public cryptographic key identity",
+          "maxLength": 256
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp of account registration",
+          "maxLength": 64
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last profile update",
+          "maxLength": 64
+        }
+      },
+      "required": ["uid", "displayName", "email"]
+    },
+    "UserContact": {
+      "title": "UserContact",
+      "description": "Saved contact entry with public key and messaging state",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique contact identifier",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Contact display name",
+          "maxLength": 100
+        },
+        "phone": {
+          "type": "string",
+          "description": "Contact phone number or peer address",
+          "maxLength": 50
+        },
+        "avatar": {
+          "type": "string",
+          "description": "Avatar URL or placeholder identifier",
+          "maxLength": 1024
+        },
+        "status": {
+          "type": "string",
+          "description": "Online presence status",
+          "maxLength": 50
+        },
+        "publicKey": {
+          "type": "string",
+          "description": "Contact public key for end-to-end encryption",
+          "maxLength": 256
+        },
+        "unreadCount": {
+          "type": "number",
+          "description": "Count of unread messages from this contact"
+        },
+        "isLocked": {
+          "type": "boolean",
+          "description": "Whether this chat is biometrically locked"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user UID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        }
+      },
+      "required": ["id", "name", "userId"]
+    },
+    "EncryptedMessage": {
+      "title": "EncryptedMessage",
+      "description": "End-to-end encrypted message record stored securely",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Message UUID identifier",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "chatId": {
+          "type": "string",
+          "description": "Target contact or group conversation ID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "senderId": {
+          "type": "string",
+          "description": "Sender user identifier",
+          "maxLength": 128
+        },
+        "text": {
+          "type": "string",
+          "description": "Ciphertext or encrypted message payload",
+          "maxLength": 65536
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "Timestamp string of the message",
+          "maxLength": 64
+        },
+        "status": {
+          "type": "string",
+          "description": "Delivery status: sending, sent, delivered, read",
+          "maxLength": 20
+        },
+        "type": {
+          "type": "string",
+          "description": "Message content type: text, image, audio, file, location, poll",
+          "maxLength": 20
+        },
+        "isEncrypted": {
+          "type": "boolean",
+          "description": "True if payload has been encrypted with AES-256-GCM"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user UID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        }
+      },
+      "required": ["id", "chatId", "senderId", "text", "userId"]
+    },
+    "CallLog": {
+      "title": "CallLog",
+      "description": "Call history record for voice and video WebRTC sessions",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Call log record UUID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "contactId": {
+          "type": "string",
+          "description": "Associated contact ID",
+          "maxLength": 128
+        },
+        "contactName": {
+          "type": "string",
+          "description": "Display name of participant",
+          "maxLength": 100
+        },
+        "type": {
+          "type": "string",
+          "description": "Call type: audio or video",
+          "maxLength": 20
+        },
+        "direction": {
+          "type": "string",
+          "description": "Call direction: incoming, outgoing, or missed",
+          "maxLength": 20
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "ISO timestamp of call initiation",
+          "maxLength": 64
+        },
+        "duration": {
+          "type": "number",
+          "description": "Duration of completed call in seconds"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user UID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        }
+      },
+      "required": ["id", "contactId", "contactName", "type", "direction", "userId"]
+    },
+    "UserSetting": {
+      "title": "UserSetting",
+      "description": "Personal client preferences and UI configuration",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "Owner user UID",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "readReceipts": {
+          "type": "boolean",
+          "description": "Whether read receipts are transmitted"
+        },
+        "font": {
+          "type": "string",
+          "description": "Selected typography styling",
+          "maxLength": 32
+        },
+        "theme": {
+          "type": "string",
+          "description": "UI theme: dark or light",
+          "maxLength": 16
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp of settings change",
+          "maxLength": 64
+        }
+      },
+      "required": ["userId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Public user profile and encryption metadata"
+    },
+    "/users/{userId}/contacts/{contactId}": {
+      "schema": "UserContact",
+      "description": "User encrypted contacts book"
+    },
+    "/users/{userId}/messages/{messageId}": {
+      "schema": "EncryptedMessage",
+      "description": "End-to-end encrypted chat messages synced to user cloud storage"
+    },
+    "/users/{userId}/calls/{callId}": {
+      "schema": "CallLog",
+      "description": "User WebRTC audio and video call records"
+    },
+    "/users/{userId}/settings/config": {
+      "schema": "UserSetting",
+      "description": "User client preferences and sync configuration"
+    }
+  }
+}

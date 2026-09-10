@@ -1,0 +1,145 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Entity validation helpers
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'email'])
+        && data.uid is string && data.uid.size() <= 128 && data.uid == request.auth.uid
+        && data.displayName is string && data.displayName.size() <= 100
+        && data.email is string && data.email.size() <= 256
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 1024))
+        && (!('publicKey' in data) || (data.publicKey is string && data.publicKey.size() <= 256));
+    }
+
+    function isValidUserContact(data, userId) {
+      return data.keys().hasAll(['id', 'name', 'userId'])
+        && data.id is string && data.id.size() <= 128
+        && data.name is string && data.name.size() <= 100
+        && data.userId is string && data.userId == userId
+        && (!('phone' in data) || (data.phone is string && data.phone.size() <= 50))
+        && (!('avatar' in data) || (data.avatar is string && data.avatar.size() <= 1024))
+        && (!('status' in data) || (data.status is string && data.status.size() <= 50))
+        && (!('publicKey' in data) || (data.publicKey is string && data.publicKey.size() <= 256))
+        && (!('unreadCount' in data) || (data.unreadCount is number && data.unreadCount >= 0))
+        && (!('isLocked' in data) || (data.isLocked is bool));
+    }
+
+    function isValidEncryptedMessage(data, userId) {
+      return data.keys().hasAll(['id', 'chatId', 'senderId', 'text', 'userId'])
+        && data.id is string && data.id.size() <= 128
+        && data.chatId is string && data.chatId.size() <= 128
+        && data.senderId is string && data.senderId.size() <= 128
+        && data.text is string && data.text.size() <= 65536
+        && data.userId is string && data.userId == userId
+        && (!('status' in data) || (data.status is string && data.status.size() <= 20))
+        && (!('type' in data) || (data.type is string && data.type.size() <= 20))
+        && (!('isEncrypted' in data) || (data.isEncrypted is bool))
+        && (!('timestamp' in data) || (data.timestamp is string && data.timestamp.size() <= 64));
+    }
+
+    function isValidCallLog(data, userId) {
+      return data.keys().hasAll(['id', 'contactId', 'contactName', 'type', 'direction', 'userId'])
+        && data.id is string && data.id.size() <= 128
+        && data.contactId is string && data.contactId.size() <= 128
+        && data.contactName is string && data.contactName.size() <= 100
+        && data.type is string && data.type.size() <= 20
+        && data.direction is string && data.direction.size() <= 20
+        && data.userId is string && data.userId == userId
+        && (!('timestamp' in data) || (data.timestamp is string && data.timestamp.size() <= 64))
+        && (!('duration' in data) || (data.duration is number && data.duration >= 0));
+    }
+
+    function isValidUserSetting(data, userId) {
+      return data.userId is string && data.userId == userId
+        && (!('readReceipts' in data) || (data.readReceipts is bool))
+        && (!('font' in data) || (data.font is string && data.font.size() <= 32))
+        && (!('theme' in data) || (data.theme is string && data.theme.size() <= 16))
+        && (!('updatedAt' in data) || (data.updatedAt is string && data.updatedAt.size() <= 64));
+    }
+
+    // User Profile Document
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false; // Scrape prevention
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(incoming());
+      allow update: if isOwner(userId) && isValidId(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'photoURL', 'publicKey', 'updatedAt']);
+      allow delete: if isOwner(userId);
+
+      // User Contacts Subcollection
+      match /contacts/{contactId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(contactId) && isValidUserContact(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(contactId)
+          && isValidUserContact(incoming(), userId)
+          && incoming().userId == existing().userId
+          && incoming().id == existing().id
+          && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'phone', 'avatar', 'status', 'publicKey', 'unreadCount', 'isLocked', 'lastSeen']);
+        allow delete: if isOwner(userId);
+      }
+
+      // User Messages Subcollection
+      match /messages/{messageId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(messageId) && isValidEncryptedMessage(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(messageId)
+          && isValidEncryptedMessage(incoming(), userId)
+          && incoming().userId == existing().userId
+          && incoming().id == existing().id
+          && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'text', 'isEncrypted']);
+        allow delete: if isOwner(userId);
+      }
+
+      // User Call Logs Subcollection
+      match /calls/{callId} {
+        allow get, list: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidId(callId) && isValidCallLog(incoming(), userId);
+        allow update: if isOwner(userId) && isValidId(callId)
+          && isValidCallLog(incoming(), userId)
+          && incoming().userId == existing().userId
+          && incoming().id == existing().id
+          && incoming().diff(existing()).affectedKeys().hasOnly(['duration']);
+        allow delete: if isOwner(userId);
+      }
+
+      // User Settings Subcollection
+      match /settings/{settingId} {
+        allow get, list: if isOwner(userId);
+        allow create, update: if isOwner(userId) && isValidId(settingId)
+          && isValidUserSetting(incoming(), userId)
+          && incoming().userId == (existing() == null ? userId : existing().userId)
+          && (existing() == null || incoming().diff(existing()).affectedKeys().hasOnly(['readReceipts', 'font', 'theme', 'updatedAt']));
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}
